@@ -70,6 +70,7 @@ def main():
 
     if st.session_state.diagnosticos_sugeridos:
         st.write("Diagnósticos sugeridos com base nos sintomas selecionados:")
+        st.write("por Renato Douglas")
         diagnosticos_selecionados = []
         for diagnostico, sintoma in st.session_state.diagnosticos_sugeridos:
             sintoma_selecionado = sintoma.replace("_", " ")
