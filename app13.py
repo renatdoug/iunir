@@ -1,8 +1,7 @@
 import streamlit as st
 import pandas as pd
-import pickle
+from joblib import load
 from sklearn.preprocessing import LabelEncoder
-import random
 import uuid
 
 @st.cache_data
@@ -16,9 +15,8 @@ def carregar_dataframe(file_path):
 @st.cache_data
 def carregar_modelo(file_path):
     try:
-        with open(file_path, 'rb') as file:
-            return pickle.load(file)
-    except (FileNotFoundError, pickle.UnpicklingError):
+        return load(file_path)
+    except (FileNotFoundError, IOError):
         st.error(f"Erro: O modelo '{file_path}' não pôde ser carregado.")
         return None
 
@@ -46,7 +44,7 @@ def main():
     st.markdown("<h3 style='text-align: center; color: #FF5733;'>Sistema de Previsão de Diagnóstico de Enfermagem</h3>", unsafe_allow_html=True)
 
     df = carregar_dataframe('dataset_30outubroV3.csv')
-    best_tree = carregar_modelo('modelAgosto.pkl')
+    best_tree = carregar_modelo('modelAgosto.joblib')
     cuidados_df = carregar_cuidados('cuidados_diags.csv')
 
     if df is None or best_tree is None or cuidados_df is None:
@@ -65,25 +63,30 @@ def main():
             return
 
         st.session_state.diagnosticos_sugeridos = processa_sintomas(sintomas, atributos, best_tree, label_encoder)
+        st.session_state.diagnosticos_selecionados = []  # Reinicializando a lista de selecionados para nova seleção
 
-    if 'diagnosticos_selecionados' not in st.session_state:
-        st.session_state.diagnosticos_selecionados = []
-
-    if 'diagnosticos_sugeridos' in st.session_state and st.session_state.diagnosticos_sugeridos:
+    if 'diagnosticos_sugeridos' in st.session_state:
         st.write("Diagnósticos sugeridos com base nos sintomas selecionados:")
+        
+        # Para debugging, exibir os diagnósticos sugeridos
+        st.write(st.session_state.diagnosticos_sugeridos)
 
         for diagnostico, sintoma in st.session_state.diagnosticos_sugeridos:
             sintoma_selecionado = sintoma.replace("_", " ")
-            checkbox_key = f"{diagnostico}_{sintoma_selecionado}"
-            if st.checkbox(f"Diagnóstico: {diagnostico}. Característica Definidora: {sintoma_selecionado}", 
-                           key=checkbox_key):
+            checkbox_key = f"{diagnostico}_{sintoma_selecionado}_{uuid.uuid4()}"
+            selected = st.checkbox(f"Diagnóstico: {diagnostico}. Característica Definidora: {sintoma_selecionado}", key=checkbox_key)
+            
+            if selected:
                 if diagnostico not in st.session_state.diagnosticos_selecionados:
                     st.session_state.diagnosticos_selecionados.append(diagnostico)
             else:
                 if diagnostico in st.session_state.diagnosticos_selecionados:
                     st.session_state.diagnosticos_selecionados.remove(diagnostico)
 
-    if st.session_state.diagnosticos_selecionados:
+        # Exibir a lista de diagnósticos selecionados para debugging
+        st.write("Diagnósticos selecionados:", st.session_state.diagnosticos_selecionados)
+
+    if 'diagnosticos_selecionados' in st.session_state and st.session_state.diagnosticos_selecionados:
         st.subheader("Cuidados Relacionados aos Diagnósticos Selecionados:")
         for diagnostico_selecionado in st.session_state.diagnosticos_selecionados:
             st.markdown(f"**{diagnostico_selecionado}**")
