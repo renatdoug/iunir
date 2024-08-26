@@ -44,6 +44,8 @@ def processa_sintomas(sintomas, atributos, best_tree, label_encoder):
 
 def main():
     st.markdown("<h3 style='text-align: center; color: #FF5733;'>Sistema de Previsão de Diagnóstico de Enfermagem</h3>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: right; color: #ff0015;'>por Renato Douglas</h1>", unsafe_allow_html=True)
+
 
     df = carregar_dataframe('dataset_30outubroV3.csv')
     best_tree = carregar_modelo('modelAgosto.pkl')
